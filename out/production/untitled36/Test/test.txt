@@ -1,0 +1,151 @@
+from flask import Flask, render_template_string, request, redirect
+
+app = Flask(__name__)
+
+# HTML templates مع CSS بسيط للتوسيط
+main_page = '''
+
+<html>
+<head>
+    <title>Store</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        div.product {
+            margin-bottom: 20px;
+        }
+        hr {
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Our Online Store</h1>
+    <p><a href="/">Home</a>  <a href="/add">Add Product</a></p>
+    <h2>Products:</h2>
+    {% for product in products %}
+        <div>
+            <h3>{{ product.name }}</h3>
+            <p>Price: {{ product.price }} </p>
+            <p>{{ product.details }}</p>
+            <p>
+                <a href="/product/{{ product.id }}">Details</a>
+                <a href="/delete/{{ product.id }}">Delete</a>
+            </p>
+        </div>
+        <hr>
+    {% endfor %}
+</body>
+</html>
+'''
+
+add_page = '''
+
+<html>
+<head>
+    <title>Add Product</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        form {
+            display: inline-block;
+            text-align: left;
+            margin-top: 20px;
+        }
+        p { margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>Add New Product</h1>
+    <p><a href="/">Back</a></p>
+    <form method="POST">
+        <p>
+            Name:<br>
+            <input type="text" name="name" required>
+        </p>
+        <p>
+            Price:<br>
+            <input type="number" name="price" step="0.01" required>
+        </p>
+        <p>
+            Details:<br>
+            <textarea name="details" rows="3" required></textarea>
+        </p>
+        <p>
+            Image:<br>
+            <input type="text" name="image" required>
+        </p>
+        <p><button type="submit">Add Product</button></p>
+    </form>
+</body>
+</html>
+'''
+
+details_page = '''
+
+<html>
+<head>
+    <title>Product Details</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <p><a href="/">Back to Products</a></p>
+    <h1>{{ product.name }}</h1>
+    <p>Price: {{ product.price }} </p>
+    <p>Details: {{ product.details }}</p>
+    <p><a href="/delete/{{ product.id }}">Delete Product</a></p>
+</body>
+</html>
+'''
+
+# بيانات تجريبية
+products = [
+    {'id': 1, 'name': 'Dell Laptop', 'price': 2500, 'details': 'Powerful laptop, i7, 16GB RAM', 'image': 'laptop.jpg'},
+]
+
+# Routes
+@app.route('/')
+def display_products():
+    return render_template_string(main_page, products=products)
+
+@app.route('/add', methods=['GET', 'POST'])
+def add_product():
+    if request.method == 'POST':
+        new_product = {
+            'id': len(products) + 1,
+            'name': request.form['name'],
+            'price': float(request.form['price']),
+            'details': request.form['details'],
+            'image': request.form['image']
+        }
+        products.append(new_product)
+        return redirect('/')
+    return render_template_string(add_page)
+
+@app.route('/product/<int:product_id>')
+def product_details(product_id):
+    product = next((p for p in products if p['id'] == product_id), None)
+    if product:
+        return render_template_string(details_page, product=product)
+    return "Product not found"
+
+@app.route('/delete/<int:product_id>')
+def delete_product(product_id):
+    global products
+    products = [p for p in products if p['id'] != product_id]
+    return redirect('/')
+
+if __name__ == '__main__':
+    app.run(debug=True)
