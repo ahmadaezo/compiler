@@ -5,147 +5,97 @@ import ast.html.*;
 import ast.css.*;
 import ast.jinja.*;
 import ast.flask.*;
+import java.util.List;
 
 public class ASTPrinter implements ASTVisitor {
 
-    private int indent = 0;
+    private String prefix = "";
 
-    private void printLine(String s) {
-        System.out.println("  ".repeat(indent) + s);
-    }
-
-    private void down() { indent++; }
-    private void up() { indent--; }
-
-    // ================= GENERAL AST =================
-
-    @Override
-    public void visit(ProgramNode node) {
-        printLine("PROGRAM");
-        down();
-        for (ASTNode n : node.getChildren()) {
-            n.accept(this);
+    // Helper to format the line: NodeName (Line: X) [Detail]
+    private String getFormattedNode(ASTNode node) {
+        String info = "";
+        if (node instanceof FlaskHtmlNode) info = " [Tag: " + ((FlaskHtmlNode) node).getTagName() + "]";
+        else if (node instanceof FunctionNode) info = " [Name: " + ((FunctionNode) node).getName() + "]";
+        else if (node instanceof RouteNode) info = " [Path: " + ((RouteNode) node).getRoute() + "]";
+        else if (node instanceof JinjaExpressionNode) info = " [Expr: " + ((JinjaExpressionNode) node).getExpression() + "]";
+        else if (node instanceof CssBlockNode) info = " [Selector: " + ((CssBlockNode) node).getSelector() + "]";
+        else if (node instanceof CssRuleNode) info = " [Prop: " + ((CssRuleNode) node).getProperty() + "]";
+        else if (node instanceof FlaskTextNode) {
+            String txt = ((FlaskTextNode) node).getText().trim().replace("\n", " ");
+            if (txt.length() > 20) txt = txt.substring(0, 17) + "...";
+            info = " [Text: " + txt + "]";
         }
-        up();
+        return node.getNodeName() + " (Line: " + node.getLine() + ")" + info;
     }
 
-    // ================= HTML =================
+    // Central logic to handle indentation and tree lines
+    private void visitChildren(List<? extends ASTNode> children) {
+        if (children == null || children.isEmpty()) return;
 
-    @Override
-    public void visit(HtmlElementNode node) {
-        printLine("<" + node.getTagName() + ">");
-        down();
+        String oldPrefix = prefix;
+        for (int i = 0; i < children.size(); i++) {
+            boolean isLast = (i == children.size() - 1);
+            ASTNode child = children.get(i);
 
-        for (HtmlAttributeNode a : node.getAttributes()) {
-            a.accept(this);
+            // Print the current node with the correct branch character
+            System.out.println(prefix + (isLast ? "└── " : "├── ") + getFormattedNode(child));
+
+            // Update prefix for the next level of depth
+            prefix = oldPrefix + (isLast ? "    " : "│   ");
+            child.accept(this);
+
+            // Restore prefix after returning from recursion
+            prefix = oldPrefix;
         }
-
-        for (HtmlNode c : node.getChildren()) {
-            c.accept(this);
-        }
-
-        up();
-        printLine("</" + node.getTagName() + ">");
     }
 
-    @Override
-    public void visit(HtmlAttributeNode node) {
-        if (node.getValue() == null)
-            printLine("@" + node.getName());
-        else
-            printLine("@" + node.getName() + " = " + node.getValue());
-    }
-
-    @Override
-    public void visit(TextNode node) {
-        printLine("TEXT: " + node.getText());
-    }
-
-    // ================= CSS =================
-
-    @Override
-    public void visit(CssBlockNode node) {
-        printLine("CSS " + node.getSelector());
-        down();
-        for (CssRuleNode r : node.getRules()) {
-            r.accept(this);
-        }
-        up();
-    }
-
-    @Override
-    public void visit(CssRuleNode node) {
-        printLine(node.getProperty() + " = " + node.getValue());
-    }
-
-    // ================= JINJA =================
-
-    @Override
-    public void visit(JinjaExpressionNode node) {
-        printLine("{{ " + node.getExpression() + " }}");
-    }
-
-    @Override
-    public void visit(JinjaForNode node) {
-        printLine("{% for " + node.getVariable() + " in " + node.getIterable() + " %}");
-        down();
-        for (HtmlNode c : node.getBody()) {
-            c.accept(this);
-        }
-        up();
-        printLine("{% endfor %}");
-    }
-
-    @Override
-    public void visit(JinjaStatementNode node) {
-        printLine("{% " + node.getKeyword() + " " +
-                String.join(" ", node.getArguments()) + " %}");
-    }
-
-    // ================= FLASK AST =================
+    // ================= VISIT METHODS =================
 
     @Override
     public void visit(FlaskProgramNode node) {
-        printLine("FLASK PROGRAM");
-        down();
-        for (ASTNode child : node.getChildren()) { // Change to ASTNode
-            child.accept(this);
-        }
-        up();
-    }
-
-    @Override
-    public void visit(RouteNode node) {
-        printLine("Route: " + node.getRoute());
-        down();
-        for (FlaskASTNode child : node.getChildren()) {
-            child.accept(this);
-        }
-        up();
-    }
-
-    @Override
-    public void visit(FunctionNode node) {
-        printLine("Function: " + node.getName());
-        down();
-        for (ASTNode child : node.getChildren()) { // Change to ASTNode
-            child.accept(this);
-        }
-        up();
+        // Root node has no prefix or branch characters
+        System.out.println(node.getNodeName() + " (Line: " + node.getLine() + ")");
+        visitChildren(node.getChildren());
     }
 
     @Override
     public void visit(FlaskHtmlNode node) {
-        printLine("HTML: <" + node.getTagName() + ">");
-        down();
-        for (ASTNode child : node.getChildren()) { // Change to ASTNode
-            child.accept(this);
-        }
-        up();
+        visitChildren(node.getChildren());
     }
 
     @Override
-    public void visit(FlaskTextNode node) {
-        printLine("Text: " + node.getText());
+    public void visit(FunctionNode node) {
+        visitChildren(node.getChildren());
     }
+
+    @Override
+    public void visit(RouteNode node) {
+        visitChildren(node.getChildren());
+    }
+
+    @Override
+    public void visit(CssBlockNode node) {
+        visitChildren(node.getRules());
+    }
+
+    @Override
+    public void visit(JinjaForNode node) {
+        visitChildren(node.getBody());
+    }
+
+    @Override
+    public void visit(ProgramNode node) {
+        System.out.println(node.getNodeName() + " (Line: " + node.getLine() + ")");
+        visitChildren(node.getChildren());
+    }
+
+    // These terminal nodes don't have children to visit,
+    // their logic is handled in getFormattedNode and visitChildren
+    @Override public void visit(HtmlElementNode node) { visitChildren(node.getChildren()); }
+    @Override public void visit(HtmlAttributeNode node) {}
+    @Override public void visit(TextNode node) {}
+    @Override public void visit(CssRuleNode node) {}
+    @Override public void visit(JinjaExpressionNode node) {}
+    @Override public void visit(JinjaStatementNode node) {}
+    @Override public void visit(FlaskTextNode node) {}
 }

@@ -7,10 +7,10 @@ import java.util.List;
 
 public class FlaskHtmlNode extends FlaskASTNode {
     private final String tagName;
-    private final List<ASTNode> children = new ArrayList<>(); // Use ASTNode
+    private final List<ASTNode> children = new ArrayList<>();
 
     public FlaskHtmlNode(String tagName, int line) {
-        super("HtmlElement", line);
+        super(FlaskHtmlNode.class.getSimpleName(), line);
         this.tagName = tagName;
     }
 

@@ -7,7 +7,7 @@ public class FlaskTextNode extends FlaskASTNode {
     private final String text;
 
     public FlaskTextNode(String text, int line) {
-        super("Text", line);
+        super(FlaskTextNode.class.getSimpleName(), line);
         this.text = text;
     }
 

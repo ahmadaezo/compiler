@@ -9,7 +9,7 @@ public class JinjaStatementNode extends JinjaNode {
     private final List<String> arguments;
 
     public JinjaStatementNode(String keyword, int line, List<String> arguments) {
-        super("JinjaStatement", line);
+        super(JinjaStatementNode.class.getSimpleName(), line);
         this.keyword = keyword;
         this.arguments = arguments;
     }

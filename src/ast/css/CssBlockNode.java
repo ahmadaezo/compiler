@@ -10,7 +10,7 @@ public class CssBlockNode extends ASTNode {
     private final List<CssRuleNode> rules;
 
     public CssBlockNode(String selector, int line, List<CssRuleNode> rules) {
-        super("CssBlock", line);
+        super(CssBlockNode.class.getSimpleName(), line);
         this.selector = selector;
         this.rules = rules;
     }

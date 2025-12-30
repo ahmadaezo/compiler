@@ -7,7 +7,7 @@ public class JinjaExpressionNode extends JinjaNode {
     private final String expression;
 
     public JinjaExpressionNode(String expression, int line) {
-        super("JinjaExpression", line);
+        super(JinjaExpressionNode.class.getSimpleName(), line);
         this.expression = expression;
     }
 

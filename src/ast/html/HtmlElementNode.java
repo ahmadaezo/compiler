@@ -15,7 +15,7 @@ public class HtmlElementNode extends HtmlNode {
             List<HtmlAttributeNode> attributes,
             List<HtmlNode> children
     ) {
-        super("HtmlElement", line);
+        super(HtmlElementNode.class.getSimpleName(), line);
         this.tagName = tagName;
         this.attributes = attributes;
         this.children = children;

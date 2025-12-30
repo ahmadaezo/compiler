@@ -11,7 +11,7 @@ public class RouteNode extends FlaskASTNode {
     private final List<FlaskASTNode> children = new ArrayList<>();
 
     public RouteNode(String route, int line) {
-        super("Route", line);
+        super(RouteNode.class.getSimpleName(), line);
         this.route = route;
     }
 

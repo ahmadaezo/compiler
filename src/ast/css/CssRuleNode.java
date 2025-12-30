@@ -9,7 +9,7 @@ public class CssRuleNode extends ASTNode {
     private final String value;
 
     public CssRuleNode(String property, String value, int line) {
-        super("CssRule", line);
+        super(CssRuleNode.class.getSimpleName(), line);
         this.property = property;
         this.value = value;
     }

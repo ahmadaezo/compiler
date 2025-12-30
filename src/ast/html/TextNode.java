@@ -7,7 +7,7 @@ public class TextNode extends HtmlNode {
     private final String text;
 
     public TextNode(String text, int line) {
-        super("Text", line);
+        super(TextNode.class.getSimpleName(), line);
         this.text = text;
     }
 

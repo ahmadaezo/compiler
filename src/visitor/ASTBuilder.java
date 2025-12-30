@@ -19,33 +19,52 @@ public class ASTBuilder extends Example1ParserBaseVisitor<ASTNode> {
     public ASTNode visitProgram(Example1Parser.ProgramContext ctx) {
         FlaskProgramNode program = new FlaskProgramNode("FlaskProgram", ctx.start.getLine());
         for (var stmt : ctx.statement()) {
-            // This handles cases where a statement has both a route and a function
             ASTNode node = visit(stmt);
             if (node != null) {
-                program.add(node);
+                // FLATTENING LOGIC:
+                // If the parser accidentally nested functions, we extract them
+                // and add them as siblings to the main program root.
+                if (node instanceof FunctionNode) {
+                    flattenFunctions(program, (FunctionNode) node);
+                } else {
+                    program.add(node);
+                }
             }
         }
         return program;
     }
 
+    private void flattenFunctions(FlaskProgramNode root, FunctionNode currentFunc) {
+        root.add(currentFunc);
+        List<ASTNode> children = new ArrayList<>(currentFunc.getChildren());
+        for (ASTNode child : children) {
+            if (child instanceof FunctionNode) {
+                // Remove from nested position and move to root
+                currentFunc.getChildren().remove(child);
+                flattenFunctions(root, (FunctionNode) child);
+            }
+        }
+    }
+
     @Override
     public ASTNode visitStatement(Example1Parser.StatementContext ctx) {
-        // If there is a routeDecorator, we want to capture it and the function together
-        if (ctx.routeDecorator() != null) {
+        // Correctly handle the combination of @app.route and def function()
+        if (ctx.routeDecorator() != null && ctx.functionDef() != null) {
             RouteNode route = (RouteNode) visit(ctx.routeDecorator());
             FunctionNode func = (FunctionNode) visit(ctx.functionDef());
-            if (func != null) {
-                func.addChild(route); // Attach route to function
+            if (func != null && route != null) {
+                func.addChild(route); // Attach route to its function
                 return func;
             }
         }
-        return visitChildren(ctx);
+        return super.visitStatement(ctx);
     }
 
     // ================= ROUTES =================
     @Override
     public ASTNode visitRouteDecorator(Example1Parser.RouteDecoratorContext ctx) {
-        String path = ctx.STRING_LITERAL().getText().replace("\"", "");
+        // Removes quotes from the route string
+        String path = ctx.STRING_LITERAL().getText().replace("\"", "").replace("'", "");
         return new RouteNode(path, ctx.start.getLine());
     }
 
@@ -54,10 +73,14 @@ public class ASTBuilder extends Example1ParserBaseVisitor<ASTNode> {
     public ASTNode visitFunctionDef(Example1Parser.FunctionDefContext ctx) {
         String name = ctx.IDENTIFIER().getText();
         FunctionNode fn = new FunctionNode(name, ctx.start.getLine());
+
+        // Visit only the statements strictly inside this function's block [cite: 41, 45]
         if (ctx.block() != null) {
             for (var s : ctx.block().statement()) {
                 ASTNode child = visit(s);
-                if (child != null) fn.addChild(child);
+                if (child != null) {
+                    fn.addChild(child);
+                }
             }
         }
         return fn;
@@ -82,13 +105,13 @@ public class ASTBuilder extends Example1ParserBaseVisitor<ASTNode> {
         String tag = ctx.IDENTIFIER().getText();
         FlaskHtmlNode el = new FlaskHtmlNode(tag, ctx.start.getLine());
 
-        // Visit Attributes
+        // Visit Attributes [cite: 52, 53]
         for (var attrCtx : ctx.htmlAttribute()) {
             ASTNode attr = visit(attrCtx);
             if (attr != null) el.addAttribute(attr);
         }
 
-        // Visit Body Content
+        // Visit Body Content [cite: 59]
         for (var b : ctx.htmlContentBody()) {
             ASTNode n = visit(b);
             if (n != null) el.addChild(n);
@@ -99,8 +122,9 @@ public class ASTBuilder extends Example1ParserBaseVisitor<ASTNode> {
     @Override
     public ASTNode visitHtmlAttribute(Example1Parser.HtmlAttributeContext ctx) {
         if (ctx.basicAttribute() != null) {
-            String name = ctx.basicAttribute().IDENTIFIER().removeFirst().getText();
-            String val = ctx.basicAttribute().getChild(2).getText().replace("\"", "");
+            // Updated to handle IDENTIFIER properly based on your .g4
+            String name = ctx.basicAttribute().IDENTIFIER().get(0).getText();
+            String val = ctx.basicAttribute().getChild(2).getText().replace("\"", "").replace("'", "");
             return new FlaskTextNode("Attribute: " + name + "=" + val, ctx.start.getLine());
         }
         if (ctx.booleanAttribute() != null) {
@@ -128,7 +152,6 @@ public class ASTBuilder extends Example1ParserBaseVisitor<ASTNode> {
         String var = ctx.IDENTIFIER(0).getText();
         String list = ctx.IDENTIFIER(1).getText();
 
-        // Use a generic Node or specialized JinjaForNode
         FlaskHtmlNode forNode = new FlaskHtmlNode("JinjaFor: " + var + " in " + list, ctx.start.getLine());
         for (var t : ctx.templateContent()) {
             ASTNode n = visit(t);

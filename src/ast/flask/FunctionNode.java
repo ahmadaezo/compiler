@@ -10,7 +10,7 @@ public class FunctionNode extends FlaskASTNode {
     private final List<ASTNode> children = new ArrayList<>(); // Use ASTNode
 
     public FunctionNode(String name, int line) {
-        super("Function", line);
+        super(FunctionNode.class.getSimpleName(), line);
         this.name = name;
     }
 

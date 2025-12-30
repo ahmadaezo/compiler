@@ -11,7 +11,7 @@ public class JinjaForNode extends JinjaNode {
     private final List<HtmlNode> body;
 
     public JinjaForNode(String variable, String iterable, int line, List<HtmlNode> body) {
-        super("JinjaFor", line);
+        super(JinjaForNode.class.getSimpleName(), line);
         this.variable = variable;
         this.iterable = iterable;
         this.body = body;

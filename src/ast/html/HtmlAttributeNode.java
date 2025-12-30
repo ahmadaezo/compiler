@@ -8,7 +8,7 @@ public class HtmlAttributeNode extends HtmlNode {
     private final String value; // null for boolean attributes
 
     public HtmlAttributeNode(String name, String value, int line) {
-        super("HtmlAttribute", line);
+        super(HtmlAttributeNode.class.getSimpleName(), line);
         this.name = name;
         this.value = value;
     }
