@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FlaskHtmlNode extends FlaskASTNode {
+
     private final String tagName;
     private final List<ASTNode> children = new ArrayList<>();
 

@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FlaskProgramNode extends FlaskASTNode {
-    // Change list type to ASTNode
+
     private final List<ASTNode> children = new ArrayList<>();
 
     public FlaskProgramNode(String flaskProgram, int line) {

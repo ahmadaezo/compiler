@@ -5,7 +5,7 @@ import ast.ASTVisitor;
 public class HtmlAttributeNode extends HtmlNode {
 
     private final String name;
-    private final String value; // null for boolean attributes
+    private final String value;
 
     public HtmlAttributeNode(String name, String value, int line) {
         super(HtmlAttributeNode.class.getSimpleName(), line);

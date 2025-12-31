@@ -21,8 +21,6 @@ public class HtmlElementNode extends HtmlNode {
         this.children = children;
     }
 
-    // ===== GETTERS (REQUIRED) =====
-
     public String getTagName() {
         return tagName;
     }

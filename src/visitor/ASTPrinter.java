@@ -11,7 +11,6 @@ public class ASTPrinter implements ASTVisitor {
 
     private String prefix = "";
 
-    // Helper to format the line: NodeName (Line: X) [Detail]
     private String getFormattedNode(ASTNode node) {
         String info = "";
         if (node instanceof FlaskHtmlNode) info = " [Tag: " + ((FlaskHtmlNode) node).getTagName() + "]";
@@ -28,7 +27,6 @@ public class ASTPrinter implements ASTVisitor {
         return node.getNodeName() + " (Line: " + node.getLine() + ")" + info;
     }
 
-    // Central logic to handle indentation and tree lines
     private void visitChildren(List<? extends ASTNode> children) {
         if (children == null || children.isEmpty()) return;
 
@@ -37,19 +35,14 @@ public class ASTPrinter implements ASTVisitor {
             boolean isLast = (i == children.size() - 1);
             ASTNode child = children.get(i);
 
-            // Print the current node with the correct branch character
             System.out.println(prefix + (isLast ? "└── " : "├── ") + getFormattedNode(child));
 
-            // Update prefix for the next level of depth
             prefix = oldPrefix + (isLast ? "    " : "│   ");
             child.accept(this);
 
-            // Restore prefix after returning from recursion
             prefix = oldPrefix;
         }
     }
-
-    // ================= VISIT METHODS =================
 
     @Override
     public void visit(FlaskProgramNode node) {
@@ -89,8 +82,6 @@ public class ASTPrinter implements ASTVisitor {
         visitChildren(node.getChildren());
     }
 
-    // These terminal nodes don't have children to visit,
-    // their logic is handled in getFormattedNode and visitChildren
     @Override public void visit(HtmlElementNode node) { visitChildren(node.getChildren()); }
     @Override public void visit(HtmlAttributeNode node) {}
     @Override public void visit(TextNode node) {}
