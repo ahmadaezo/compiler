@@ -2,9 +2,6 @@ parser grammar Example1Parser;
 
 options {tokenVocab=Example1Lexer;}
 
-// ------------------------
-// PYTHON STRUCTURES & EXPRESSIONS
-// ------------------------
 program
     : statement* EOF
     ;
@@ -65,7 +62,6 @@ factor
     | callOrAccess
     ;
 
-// Comprehensions
 comprehension
     : DJANGO_FOR IDENTIFIER DJANGO_IN expression (IF expression)*
     ;
@@ -74,7 +70,6 @@ generatorExpression
     : expression comprehension
     ;
 
-// Literals
 literal
     : STRING_LITERAL
     | NUMERIC_LITERAL
@@ -83,16 +78,11 @@ literal
     | NONE
     ;
 
-// Collections
 collection
     : listLiteral
     | dictLiteral
     ;
 
-/**
- * 🎯 التعديل: السماح بفاصلة اختيارية (COMMA?) قبل CLOSE_BRACKET
- * هذا يحل مشكلة الـ Trailing Comma في القوائم مثل: [1, 2,]
- */
 listLiteral
     : OPEN_BRACKET (expression (COMMA expression)* COMMA?)? CLOSE_BRACKET
     | OPEN_BRACKET expression comprehension CLOSE_BRACKET
@@ -106,7 +96,6 @@ dictPair
     : expression COLON expression
     ;
 
-// Function Calls & Access
 callOrAccess
     : primaryAccess (DOT IDENTIFIER | callArgs | indexAccess)*
     ;
@@ -133,7 +122,6 @@ argument
     | expression
     ;
 
-// Structures
 functionDef
     : DEF IDENTIFIER OPEN_PAREN params? CLOSE_PAREN COLON block
     ;
@@ -178,9 +166,6 @@ routeMethods
     : IDENTIFIER EQ listLiteral
     ;
 
-// ------------------------
-// HTML / TEMPLATE RULES
-// ------------------------
 htmlElement
     : LT IDENTIFIER htmlAttribute* GT htmlContentBody* HTML_CLOSE_TAG
     | LT IDENTIFIER htmlAttribute* SLASH GT
@@ -226,11 +211,6 @@ objectExpressionValue
     : IDENTIFIER (DOT IDENTIFIER)*
     ;
 
-// ------------------------
-// DJANGO BLOCKS
-// ------------------------
-
-// القاعدة الأساسية لأي محتوى داخل القالب
 templateContent
     : htmlElement
     | cssBlock
@@ -262,9 +242,6 @@ djangoArgs
     | expression
     ;
 
-// ------------------------
-// CSS RULES
-// ------------------------
 cssBlock
     : selector OPEN_CURLY_BRACE cssRule* CLOSE_CURLY_BRACE
     ;
@@ -297,22 +274,14 @@ ruleSeparator
     | // space (implicit)
     ;
 
-// ------------------------
-// TEMPLATE STRING (THE BRIDGE)
-// ------------------------
 templateString
     : TRIPLE_QUOTE templateDocument TRIPLE_QUOTE
     ;
 
-// إزالة EOF للسماح للمحلل بالعودة إلى قواعد Python
 templateDocument
     : templateContent*
     ;
 
-// ------------------------
-// TEXT NODES & WRAPPER
-// ------------------------
-// تم توسيعها لتشمل رموز LT و GT لمرونة أكبر
 textNode
     : (IDENTIFIER | NUMERIC_LITERAL | COLON | COMMA | SEMICOLON | DOT | PERCENT | EXCLAMATION | QUESTION | MINUS | PLUS | EQ | SLASH | LT | GT)+
     ;
