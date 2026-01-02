@@ -21,6 +21,8 @@ public class FlaskHtmlNode extends FlaskASTNode {
         this.attributes.add(attr);
     }
 
+    public List<ASTNode> getAttributes() {return attributes;}
+
     @Override
     public void accept(ASTVisitor visitor) {
         visitor.visit(this);

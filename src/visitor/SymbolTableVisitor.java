@@ -2,6 +2,7 @@ package visitor;
 
 import ast.*;
 import ast.flask.*;
+import ast.html.HtmlAttributeNode;
 import symbol.Symbol;
 import symbol.SymbolTable;
 import java.util.ArrayList;
@@ -26,35 +27,40 @@ public class SymbolTableVisitor implements ASTVisitor {
 
     @Override
     public void visit(FunctionNode node) {
-        // 1. Add the function to the current scope (Global)
+
         currentScope.define(new Symbol(node.getName(), "Function", node.getLine()));
 
-        // 2. Create and enter a new local scope
         SymbolTable localScope = new SymbolTable("Function: " + node.getName(), currentScope);
         allScopes.add(localScope);
 
         SymbolTable previousScope = currentScope;
         currentScope = localScope;
 
-        // 3. Visit function contents (to find local variables/parameters)
         for (ASTNode child : node.getChildren()) {
             child.accept(this);
         }
 
-        // 4. Exit back to parent scope
         currentScope = previousScope;
     }
 
     @Override
     public void visit(FlaskHtmlNode node) {
-        // If it's a template root, we treat it as a special definition
         if (node.getTagName().equals("template")) {
             currentScope.define(new Symbol("HTML_Template", "Static Content", node.getLine()));
         }
+
+        for (ASTNode attr : node.getAttributes()) {
+            if (attr instanceof HtmlAttributeNode) {
+                String val = ((HtmlAttributeNode) attr).getValue();
+                if (val.contains("{{")) {
+                    currentScope.define(new Symbol(val, "DynamicAttr", node.getLine()));
+                }
+            }
+        }
+
         for (ASTNode child : node.getChildren()) child.accept(this);
     }
 
-    // Standard visits to keep the traversal going
     @Override public void visit(RouteNode node) {
         currentScope.define(new Symbol(node.getRoute(), "RoutePath", node.getLine()));
     }

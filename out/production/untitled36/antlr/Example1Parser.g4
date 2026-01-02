@@ -65,7 +65,6 @@ factor
     | callOrAccess
     ;
 
-// Comprehensions
 comprehension
     : DJANGO_FOR IDENTIFIER DJANGO_IN expression (IF expression)*
     ;
@@ -74,7 +73,6 @@ generatorExpression
     : expression comprehension
     ;
 
-// Literals
 literal
     : STRING_LITERAL
     | NUMERIC_LITERAL
@@ -83,16 +81,11 @@ literal
     | NONE
     ;
 
-// Collections
 collection
     : listLiteral
     | dictLiteral
     ;
 
-/**
- * 🎯 التعديل: السماح بفاصلة اختيارية (COMMA?) قبل CLOSE_BRACKET
- * هذا يحل مشكلة الـ Trailing Comma في القوائم مثل: [1, 2,]
- */
 listLiteral
     : OPEN_BRACKET (expression (COMMA expression)* COMMA?)? CLOSE_BRACKET
     | OPEN_BRACKET expression comprehension CLOSE_BRACKET
@@ -106,7 +99,6 @@ dictPair
     : expression COLON expression
     ;
 
-// Function Calls & Access
 callOrAccess
     : primaryAccess (DOT IDENTIFIER | callArgs | indexAccess)*
     ;
@@ -133,7 +125,6 @@ argument
     | expression
     ;
 
-// Structures
 functionDef
     : DEF IDENTIFIER OPEN_PAREN params? CLOSE_PAREN COLON block
     ;
@@ -183,7 +174,7 @@ routeMethods
 // ------------------------
 htmlElement
     : LT IDENTIFIER htmlAttribute* GT htmlContentBody* HTML_CLOSE_TAG
-    | LT IDENTIFIER htmlAttribute* SLASH GT
+    | LT IDENTIFIER htmlAttribute* SLASH? GT  // التعديل: إغلاق الوسم اختياري
     ;
 
 htmlAttribute
@@ -193,17 +184,22 @@ htmlAttribute
     | imageAttribute
     ;
 
+/**
+ * 🎯 التعديل الأساسي: دعم IMAGE_SRC (src) ودعم objectExpression ({{...}}) كقيمة
+ */
 basicAttribute
-    : IDENTIFIER EQ (STRING_LITERAL | NUMERIC_LITERAL | IDENTIFIER)
+    : (IDENTIFIER | IMAGE_SRC) EQ (STRING_LITERAL | NUMERIC_LITERAL | IDENTIFIER | objectExpression)
     ;
 
 booleanAttribute
     : IDENTIFIER
     ;
 
-
+/**
+ * 🎯 التعديل: دعم تعابير جينجا داخل سمة الصورة
+ */
 imageAttribute
-    : OPEN_BRACKET IMAGE_SRC CLOSE_BRACKET EQ STRING_LITERAL
+    : OPEN_BRACKET IMAGE_SRC CLOSE_BRACKET EQ (STRING_LITERAL | objectExpression)
     ;
 
 eventAttribute
@@ -214,7 +210,8 @@ htmlContentBody
     : cssBlock
     | htmlElement
     | objectExpression
-    | djangoForBlock | djangoGeneralBlock
+    | djangoForBlock
+    | djangoGeneralBlock
     | textNode
     ;
 
@@ -222,15 +219,11 @@ objectExpression
     : OPEN_INTERP objectExpressionValue CLOSE_INTERP
     ;
 
+
 objectExpressionValue
     : IDENTIFIER (DOT IDENTIFIER)*
     ;
 
-// ------------------------
-// DJANGO BLOCKS
-// ------------------------
-
-// القاعدة الأساسية لأي محتوى داخل القالب
 templateContent
     : htmlElement
     | cssBlock
@@ -294,7 +287,7 @@ cssValue
 
 ruleSeparator
     : COMMA
-    | // space (implicit)
+    | // space
     ;
 
 // ------------------------
@@ -304,15 +297,16 @@ templateString
     : TRIPLE_QUOTE templateDocument TRIPLE_QUOTE
     ;
 
-// إزالة EOF للسماح للمحلل بالعودة إلى قواعد Python
 templateDocument
     : templateContent*
     ;
 
 // ------------------------
-// TEXT NODES & WRAPPER
+// TEXT NODES
 // ------------------------
-// تم توسيعها لتشمل رموز LT و GT لمرونة أكبر
+/**
+ * 🎯 التعديل: حذف WS_CHAR ليعمل مع الليكسر الجديد الذي يستخدم skip
+ */
 textNode
     : (IDENTIFIER | NUMERIC_LITERAL | COLON | COMMA | SEMICOLON | DOT | PERCENT | EXCLAMATION | QUESTION | MINUS | PLUS | EQ | SLASH | LT | GT)+
     ;

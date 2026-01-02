@@ -168,7 +168,7 @@ routeMethods
 
 htmlElement
     : LT IDENTIFIER htmlAttribute* GT htmlContentBody* HTML_CLOSE_TAG
-    | LT IDENTIFIER htmlAttribute* SLASH GT
+    | LT IDENTIFIER htmlAttribute* SLASH? GT
     ;
 
 htmlAttribute
@@ -179,16 +179,15 @@ htmlAttribute
     ;
 
 basicAttribute
-    : IDENTIFIER EQ (STRING_LITERAL | NUMERIC_LITERAL | IDENTIFIER)
+    : (IDENTIFIER | IMAGE_SRC) EQ (STRING_LITERAL | NUMERIC_LITERAL | IDENTIFIER | objectExpression)
     ;
 
 booleanAttribute
     : IDENTIFIER
     ;
 
-
 imageAttribute
-    : OPEN_BRACKET IMAGE_SRC CLOSE_BRACKET EQ STRING_LITERAL
+    : OPEN_BRACKET IMAGE_SRC CLOSE_BRACKET EQ (STRING_LITERAL | objectExpression)
     ;
 
 eventAttribute
@@ -199,13 +198,15 @@ htmlContentBody
     : cssBlock
     | htmlElement
     | objectExpression
-    | djangoForBlock | djangoGeneralBlock
+    | djangoForBlock
+    | djangoGeneralBlock
     | textNode
     ;
 
 objectExpression
     : OPEN_INTERP objectExpressionValue CLOSE_INTERP
     ;
+
 
 objectExpressionValue
     : IDENTIFIER (DOT IDENTIFIER)*
@@ -271,7 +272,7 @@ cssValue
 
 ruleSeparator
     : COMMA
-    | // space (implicit)
+    |
     ;
 
 templateString

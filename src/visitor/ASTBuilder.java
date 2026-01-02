@@ -42,7 +42,6 @@ public class ASTBuilder extends Example1ParserBaseVisitor<ASTNode> {
 
     @Override
     public ASTNode visitStatement(Example1Parser.StatementContext ctx) {
-
         if (ctx.routeDecorator() != null && ctx.functionDef() != null) {
             RouteNode route = (RouteNode) visit(ctx.routeDecorator());
             FunctionNode func = (FunctionNode) visit(ctx.functionDef());
@@ -108,15 +107,23 @@ public class ASTBuilder extends Example1ParserBaseVisitor<ASTNode> {
     @Override
     public ASTNode visitHtmlAttribute(Example1Parser.HtmlAttributeContext ctx) {
         if (ctx.basicAttribute() != null) {
-            String name = ctx.basicAttribute().IDENTIFIER().get(0).getText();
-            String val = ctx.basicAttribute().getChild(2).getText().replace("\"", "").replace("'", "");
-            return new FlaskTextNode("Attribute: " + name + "=" + val, ctx.start.getLine());
+            var basic = ctx.basicAttribute();
+            String name = (basic.IDENTIFIER().size() > 0) ? basic.IDENTIFIER(0).getText() : basic.IMAGE_SRC().getText();
+            String val;
+            if (basic.objectExpression() != null) {
+                val = basic.objectExpression().getText();
+            } else {
+                val = basic.getChild(2).getText().replace("\"", "").replace("'", "");
+            }
+            return new HtmlAttributeNode(name, val, ctx.start.getLine());
         }
         if (ctx.booleanAttribute() != null) {
-            return new FlaskTextNode("Attribute: " + ctx.booleanAttribute().IDENTIFIER().getText(), ctx.start.getLine());
+            return new HtmlAttributeNode(ctx.booleanAttribute().IDENTIFIER().getText(), "true", ctx.start.getLine());
         }
         if (ctx.imageAttribute() != null) {
-            return new FlaskTextNode("Attribute: src=" + ctx.imageAttribute().STRING_LITERAL().getText(), ctx.start.getLine());
+            var imgAttr = ctx.imageAttribute();
+            String val = (imgAttr.objectExpression() != null) ? imgAttr.objectExpression().getText() : imgAttr.STRING_LITERAL().getText().replace("\"", "");
+            return new HtmlAttributeNode("src", val, ctx.start.getLine());
         }
         return null;
     }

@@ -13,12 +13,26 @@ public class ASTPrinter implements ASTVisitor {
 
     private String getFormattedNode(ASTNode node) {
         String info = "";
-        if (node instanceof FlaskHtmlNode) info = " [Tag: " + ((FlaskHtmlNode) node).getTagName() + "]";
+        if (node instanceof FlaskHtmlNode) {
+            FlaskHtmlNode fn = (FlaskHtmlNode) node;
+            info = " [Tag: " + fn.getTagName();
+
+            if (!fn.getAttributes().isEmpty()) {
+                info += " {";
+                for (ASTNode attr : fn.getAttributes()) {
+                    if (attr instanceof HtmlAttributeNode) {
+                        HtmlAttributeNode a = (HtmlAttributeNode) attr;
+                        info += a.getName() + "='" + a.getValue() + "' ";
+                    }
+                }
+                info = info.trim() + "}";
+            }
+            info += "]";
+        }
         else if (node instanceof FunctionNode) info = " [Name: " + ((FunctionNode) node).getName() + "]";
         else if (node instanceof RouteNode) info = " [Path: " + ((RouteNode) node).getRoute() + "]";
         else if (node instanceof JinjaExpressionNode) info = " [Expr: " + ((JinjaExpressionNode) node).getExpression() + "]";
         else if (node instanceof CssBlockNode) info = " [Selector: " + ((CssBlockNode) node).getSelector() + "]";
-        else if (node instanceof CssRuleNode) info = " [Prop: " + ((CssRuleNode) node).getProperty() + "]";
         else if (node instanceof FlaskTextNode) {
             String txt = ((FlaskTextNode) node).getText().trim().replace("\n", " ");
             if (txt.length() > 20) txt = txt.substring(0, 17) + "...";
@@ -46,7 +60,6 @@ public class ASTPrinter implements ASTVisitor {
 
     @Override
     public void visit(FlaskProgramNode node) {
-        // Root node has no prefix or branch characters
         System.out.println(node.getNodeName() + " (Line: " + node.getLine() + ")");
         visitChildren(node.getChildren());
     }
